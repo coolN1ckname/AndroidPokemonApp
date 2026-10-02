@@ -10,10 +10,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,17 +34,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
 import com.example.androidapp.model.Pokemon
 import com.example.androidapp.viewmodel.PokemonListUiState
 import com.example.androidapp.viewmodel.PokemonListViewModel
-import coil3.compose.AsyncImage
 
 class ListScreen {
 
     @Composable
     fun MainListScreen(
-        onPokemonClick: (Int) -> Unit = {}
-    ) {
+        onPokemonClick: (Int) -> Unit = {},
+        onProfileClick: () -> Unit = {}
+    ){
 
         val viewModel: PokemonListViewModel =
             viewModel()
@@ -49,109 +57,117 @@ class ListScreen {
             mutableStateOf("")
         }
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
-        ) {
+        Scaffold(
+            bottomBar = {
 
-            OutlinedTextField(
-                value = searchText,
-                onValueChange = {
-                    searchText = it
-                },
-                modifier = Modifier.fillMaxWidth(),
-                label = {
-                    Text("Поиск покемона")
-                },
-                placeholder = {
-                    Text("Например, Pikachu")
-                },
-                singleLine = true
-            )
+            }
+        ) { innerPadding ->
 
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(16.dp)
+            ) {
 
-            when (val state = uiState) {
+                OutlinedTextField(
+                    value = searchText,
+                    onValueChange = {
+                        searchText = it
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = {
+                        Text("Поиск покемона")
+                    },
+                    placeholder = {
+                        Text("Например, Pikachu")
+                    },
+                    singleLine = true
+                )
 
-                PokemonListUiState.Loading -> {
+                Spacer(
+                    modifier = Modifier.height(16.dp)
+                )
 
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 40.dp),
-                        horizontalAlignment =
-                            Alignment.CenterHorizontally
-                    ) {
+                when (val state = uiState) {
 
-                        CircularProgressIndicator()
+                    PokemonListUiState.Loading -> {
 
-                        Spacer(
-                            modifier = Modifier.height(16.dp)
-                        )
-
-                        Text(
-                            text = "Загрузка Pokémon..."
-                        )
-                    }
-                }
-
-                is PokemonListUiState.Error -> {
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 40.dp),
-                        horizontalAlignment =
-                            Alignment.CenterHorizontally
-                    ) {
-
-                        Text(
-                            text = state.message
-                        )
-
-                        Spacer(
-                            modifier = Modifier.height(16.dp)
-                        )
-
-                        OutlinedButton(
-                            onClick = {
-                                viewModel.retry()
-                            }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 40.dp),
+                            horizontalAlignment =
+                                Alignment.CenterHorizontally
                         ) {
-                            Text("Повторить")
-                        }
-                    }
-                }
 
-                is PokemonListUiState.Success -> {
+                            CircularProgressIndicator()
 
-                    val filteredPokemons =
-                        state.pokemons.filter { pokemon ->
+                            Spacer(
+                                modifier = Modifier.height(16.dp)
+                            )
 
-                            pokemon.name.contains(
-                                searchText,
-                                ignoreCase = true
+                            Text(
+                                text = "Загрузка Pokémon..."
                             )
                         }
+                    }
 
-                    PokemonList(
-                        pokemons = filteredPokemons,
-                        isLoadingMore =
-                            state.isLoadingMore,
-                        errorMessage =
-                            state.errorMessage,
-                        onPokemonClick =
-                            onPokemonClick,
-                        onLoadMore = {
-                            viewModel.loadNextPage()
-                        },
-                        onRetry = {
-                            viewModel.retry()
+                    is PokemonListUiState.Error -> {
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 40.dp),
+                            horizontalAlignment =
+                                Alignment.CenterHorizontally
+                        ) {
+
+                            Text(
+                                text = state.message
+                            )
+
+                            Spacer(
+                                modifier = Modifier.height(16.dp)
+                            )
+
+                            OutlinedButton(
+                                onClick = {
+                                    viewModel.retry()
+                                }
+                            ) {
+                                Text("Повторить")
+                            }
                         }
-                    )
+                    }
+
+                    is PokemonListUiState.Success -> {
+
+                        val filteredPokemons =
+                            state.pokemons.filter { pokemon ->
+
+                                pokemon.name.contains(
+                                    searchText,
+                                    ignoreCase = true
+                                )
+                            }
+
+                        PokemonList(
+                            pokemons = filteredPokemons,
+                            isLoadingMore =
+                                state.isLoadingMore,
+                            errorMessage =
+                                state.errorMessage,
+                            onPokemonClick =
+                                onPokemonClick,
+                            onLoadMore = {
+                                viewModel.loadNextPage()
+                            },
+                            onRetry = {
+                                viewModel.retry()
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -209,6 +225,7 @@ class ListScreen {
                         }
                         .padding(12.dp)
                 ) {
+
                     Text(
                         text =
                             "#${pokemon.id} ${
@@ -231,11 +248,9 @@ class ListScreen {
                     )
 
                     HorizontalDivider(
-                        thickness = 1.dp,         // Толщина линии
-                        color = Color.LightGray    // Цвет линии
+                        thickness = 1.dp,
+                        color = Color.LightGray
                     )
-
-
                 }
             }
 
