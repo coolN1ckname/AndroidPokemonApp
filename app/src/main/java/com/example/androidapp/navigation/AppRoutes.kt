@@ -12,4 +12,8 @@ sealed interface AppRoute : NavKey {
     data class PokemonDetail(
         val pokemonId: Int
     ) : AppRoute
+    @Serializable
+    data object Profile : AppRoute
+
+
 }
