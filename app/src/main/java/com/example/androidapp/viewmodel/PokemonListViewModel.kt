@@ -2,8 +2,10 @@ package com.example.androidapp.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.androidapp.DI.AppContainer
 import com.example.androidapp.model.Pokemon
 import com.example.androidapp.repository.PokemonRepository
+import com.example.androidapp.usecase.GetPokemonPageUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,9 +27,10 @@ sealed interface PokemonListUiState {
     ) : PokemonListUiState
 }
 
-class PokemonListViewModel : ViewModel() {
-
-    private val repository = PokemonRepository()
+class PokemonListViewModel(
+    private val getPokemonPage: GetPokemonPageUseCase =
+        AppContainer.getPokemonPageUseCase
+    ) : ViewModel() {
 
     private val _uiState =
         MutableStateFlow<PokemonListUiState>(
@@ -57,11 +60,10 @@ class PokemonListViewModel : ViewModel() {
 
             try {
 
-                val response =
-                    repository.getPokemonPage(
-                        limit = pageSize,
-                        offset = 0
-                    )
+                val response = getPokemonPage(
+                    limit = pageSize,
+                    offset = 0
+                )
 
                 offset = pageSize
 
@@ -107,11 +109,10 @@ class PokemonListViewModel : ViewModel() {
 
             try {
 
-                val response =
-                    repository.getPokemonPage(
-                        limit = pageSize,
-                        offset = offset
-                    )
+                val response = getPokemonPage(
+                    limit = pageSize,
+                    offset = offset
+                )
 
                 offset += pageSize
 
