@@ -4,17 +4,20 @@ import com.example.androidapp.api.PokeApi
 import com.example.androidapp.model.Pokemon
 import com.example.androidapp.model.PokemonDetails
 import com.example.androidapp.model.PokemonStat
+import com.example.androidapp.repository.PokemonDataRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 data class PokemonPage(
     val pokemons: List<Pokemon>,
     val hasMore: Boolean
 )
 
-class PokemonRepository {
+class PokemonRepository : PokemonDataRepository {
 
     private val api = PokeApi.api
 
-    suspend fun getPokemonPage(
+    suspend override fun getPokemonPage(
         limit: Int,
         offset: Int
     ): PokemonPage {
@@ -45,7 +48,7 @@ class PokemonRepository {
         )
     }
 
-    suspend fun getPokemonById(
+    suspend override fun getPokemonById(
         id: Int
     ): PokemonDetails {
 
