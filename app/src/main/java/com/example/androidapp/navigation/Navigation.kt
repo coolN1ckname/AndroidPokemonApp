@@ -138,11 +138,9 @@ fun AppNavigation() {
                     }
 
                     entry<AppRoute.PokemonDetail> { route ->
-
-                        DetailsScreen().PokemonDetailScreen(
+                        DetailsScreen(
                             pokemonId = route.pokemonId,
-
-                            onBackClick = {
+                            onBack = {
                                 backStack.removeLastOrNull()
                             }
                         )

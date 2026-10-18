@@ -9,276 +9,213 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.example.androidapp.model.PokemonDetails
-import com.example.androidapp.repository.PokemonRepository
+import com.example.androidapp.viewmodel.PokemonDetailsUiState
+import com.example.androidapp.viewmodel.PokemonDetailsViewModel
+import java.util.Locale
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.Color
 
-class DetailsScreen {
+@Composable
+fun DetailsScreen(
+    pokemonId: Int,
+    onBack: () -> Unit
+) {
+    val viewModel: PokemonDetailsViewModel = viewModel(
+        key = "pokemon-details-$pokemonId",
+        factory = PokemonDetailsViewModel.factory(pokemonId)
+    )
 
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun PokemonDetailScreen(
-        pokemonId: Int,
-        onBackClick: () -> Unit
-    ) {
-        var pokemon by remember {
-            mutableStateOf<PokemonDetails?>(null)
-        }
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        var isLoading by remember {
-            mutableStateOf(true)
-        }
-
-        var errorMessage by remember {
-            mutableStateOf<String?>(null)
-        }
-
-        LaunchedEffect(pokemonId) {
-            isLoading = true
-            pokemon = null
-            errorMessage = null
-
-            try {
-                pokemon = PokemonRepository().getPokemonById(pokemonId)
-            } catch (e: Exception) {
-                errorMessage = "Не удалось загрузить данные"
-            } finally {
-                isLoading = false
+    when (val state = uiState) {
+        is PokemonDetailsUiState.Loading -> {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator()
+                Spacer(modifier = Modifier.height(12.dp))
+                Text("Загрузочка")
             }
         }
 
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = pokemon?.name?.replaceFirstChar {
-                                it.uppercase()
-                            } ?: "Pokemon #$pokemonId"
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(
-                            onClick = onBackClick
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.ArrowBack,
-                                contentDescription = "Назад"
-                            )
-                        }
-                    }
+        is PokemonDetailsUiState.Error -> {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(state.message)
+
+                OutlinedButton(
+                    onClick = { viewModel.loadPokemon() }
+                ) {
+                    Text("Повторить")
+                }
+
+                OutlinedButton(onClick = onBack) {
+                    Text("Назад")
+                }
+            }
+        }
+
+        is PokemonDetailsUiState.Success -> {
+            PokemonDetailsContent(
+                pokemon = state.pokemon,
+                onBack = onBack
+            )
+        }
+    }
+}
+
+@Composable
+private fun PokemonDetailsContent(
+    pokemon: PokemonDetails,
+    onBack: () -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+    ) {
+        item {
+            OutlinedButton(onClick = onBack) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Назад"
                 )
             }
-        ) { innerPadding ->
 
-            if (isLoading) {
+            Spacer(modifier = Modifier.height(12.dp))
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+            AsyncImage(
+                model = pokemon.imageUrl,
+                contentDescription = pokemon.name,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(220.dp)
+            )
 
-            } else if (pokemon != null) {
+            Spacer(modifier = Modifier.height(12.dp))
 
-                val currentPokemon = pokemon!!
-
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(horizontal = 16.dp)
-                ) {
-                    item {
-
-                        Spacer(
-                            modifier = Modifier.height(16.dp)
-                        )
-
-                        AsyncImage(
-                            model = currentPokemon.imageUrl,
-                            contentDescription = currentPokemon.name,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(220.dp)
-                        )
-
-                        Spacer(
-                            modifier = Modifier.height(16.dp)
-                        )
-
-                        Text(
-                            text = "#${currentPokemon.id} ${
-                                currentPokemon.name.replaceFirstChar {
-                                    it.uppercase()
-                                }
-                            }",
-                            style = MaterialTheme.typography.headlineMedium
-                        )
-
-                        HorizontalDivider(
-                            thickness = 1.dp,
-                            color = Color.LightGray
-                        )
-
-                        Spacer(
-                            modifier = Modifier.height(20.dp)
-                        )
-
-                        Text(
-                            text = "Основная информация",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-
-                        Spacer(
-                            modifier = Modifier.height(8.dp)
-                        )
-
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Рост")
-                            Text("${currentPokemon.height / 10.0} м")
+            Text(
+                text = "#${pokemon.id} ${
+                    pokemon.name.replaceFirstChar {
+                        if (it.isLowerCase()) {
+                            it.titlecase(Locale.ROOT)
+                        } else {
+                            it.toString()
                         }
+                    }
+                }",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Вес")
-                            Text("${currentPokemon.weight / 10.0} кг")
-                        }
+            HorizontalDivider(
+                thickness = 1.dp,
+                color = Color.LightGray
+            )
 
-                        Spacer(
-                            modifier = Modifier.height(20.dp)
-                        )
+            Spacer(modifier = Modifier.height(20.dp))
 
-                        HorizontalDivider(
-                            thickness = 1.dp,
-                            color = Color.LightGray
-                        )
+            Text(
+                text = "Основная информация",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
 
-                        Text(
-                            text = "Типы",
-                            style = MaterialTheme.typography.titleLarge
-                        )
+            Spacer(modifier = Modifier.height(8.dp))
 
-                        Spacer(
-                            modifier = Modifier.height(8.dp)
-                        )
+            Text("Рост: ${pokemon.height / 10.0} м")
+            Text("Вес: ${pokemon.weight / 10.0} кг")
+            Text("Типы: ${pokemon.types.joinToString()}")
 
-                        currentPokemon.types.forEach { type ->
-                            Text(
-                                text = "• ${type.replaceFirstChar { it.uppercase() }}",
-                                modifier = Modifier.padding(vertical = 2.dp)
-                            )
-                        }
+            HorizontalDivider(
+                thickness = 1.dp,
+                color = Color.LightGray
+            )
 
-                        Spacer(
-                            modifier = Modifier.height(20.dp)
-                        )
+            Spacer(modifier = Modifier.height(16.dp))
 
-                        HorizontalDivider(
-                            thickness = 1.dp,
-                            color = Color.LightGray
-                        )
+            Text(
+                text = "Способности",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
 
-                        Text(
-                            text = "Способности",
-                            style = MaterialTheme.typography.titleLarge
-                        )
+            Spacer(modifier = Modifier.height(8.dp))
 
-                        Spacer(
-                            modifier = Modifier.height(8.dp)
-                        )
-
-                        currentPokemon.abilities.forEach { ability ->
-                            Text(
-                                text = "• ${ability.replaceFirstChar { it.uppercase() }}",
-                                modifier = Modifier.padding(vertical = 2.dp)
-                            )
-                        }
-
-                        Spacer(
-                            modifier = Modifier.height(20.dp)
-                        )
-
-                        HorizontalDivider(
-                            thickness = 1.dp,
-                            color = Color.LightGray
-                        )
-
-                        Text(
-                            text = "Характеристики",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-
-                        Spacer(
-                            modifier = Modifier.height(8.dp)
-                        )
-
-                        currentPokemon.stats.forEach { stat ->
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(stat.name)
-                                Text(stat.value.toString())
+            pokemon.abilities.forEach { ability ->
+                Text(
+                    text = "• ${
+                        ability.replaceFirstChar {
+                            if (it.isLowerCase()) {
+                                it.titlecase(Locale.ROOT)
+                            } else {
+                                it.toString()
                             }
                         }
-
-                        Spacer(
-                            modifier = Modifier.height(24.dp)
-                        )
-                    }
-                }
+                    }"
+                )
             }
-            else if (errorMessage != null) {
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = errorMessage!!,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
+            HorizontalDivider(
+                thickness = 1.dp,
+                color = Color.LightGray
+            )
 
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(
+                text = "Характеристики",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+
+        items(pokemon.stats) { stat ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = stat.name.replace('-', ' '),
+                    modifier = Modifier.weight(1f)
+                )
+
+                Text(
+                    text = stat.value.toString(),
+                    fontWeight = FontWeight.Medium
+                )
             }
+        }
+
+        item {
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
