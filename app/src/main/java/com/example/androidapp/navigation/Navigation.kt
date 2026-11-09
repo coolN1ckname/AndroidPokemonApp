@@ -29,6 +29,7 @@ import com.example.androidapp.DI.AppContainer
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material.icons.filled.FilterList
+import com.example.androidapp.ui.EditProfileScreen
 
 @Composable
 fun AppNavigation() {
@@ -179,7 +180,11 @@ fun AppNavigation() {
                     }
 
                     entry<AppRoute.Profile> {
-                        ProfileScreen()
+                        ProfileScreen(
+                            onEditClick = {
+                                backStack.add(AppRoute.EditProfile)
+                            }
+                        )
                     }
 
                     entry<AppRoute.PokemonFilters> {
@@ -201,6 +206,14 @@ fun AppNavigation() {
                                 backStack.add(
                                     AppRoute.PokemonDetail(pokemonId)
                                 )
+                            }
+                        )
+                    }
+
+                    entry<AppRoute.EditProfile> {
+                        EditProfileScreen(
+                            onBack = {
+                                backStack.removeLastOrNull()
                             }
                         )
                     }
