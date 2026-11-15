@@ -20,6 +20,14 @@ import com.example.androidapp.usecase.IsFavoritePokemonUseCase
 import com.example.androidapp.usecase.AddFavoritePokemonUseCase
 import com.example.androidapp.usecase.RemoveFavoritePokemonUseCase
 import com.example.androidapp.data.cache.FilterBadgeCache
+import com.example.androidapp.data.preferences.ProfileDataStore
+import com.example.androidapp.data.repository.ProfileRepositoryImpl
+import com.example.androidapp.repository.ProfileRepository
+import com.example.androidapp.usecase.GetUserProfileUseCase
+import com.example.androidapp.usecase.SaveUserProfileUseCase
+import com.example.androidapp.data.repository.ResumeRepositoryImpl
+import com.example.androidapp.repository.ResumeRepository
+import com.example.androidapp.usecase.DownloadResumeUseCase
 
 object AppContainer {
 
@@ -96,5 +104,37 @@ object AppContainer {
 
         removeFavoritePokemonUseCase =
             RemoveFavoritePokemonUseCase(favoritesRepository)
+
+        // Профиль пользователя
+        val profileDataStore = ProfileDataStore(
+            context.applicationContext
+        )
+
+        profileRepository = ProfileRepositoryImpl(profileDataStore)
+
+        getUserProfileUseCase =
+            GetUserProfileUseCase(profileRepository)
+
+        saveUserProfileUseCase =
+            SaveUserProfileUseCase(profileRepository)
+
+        resumeRepository = ResumeRepositoryImpl(context.applicationContext)
+
+        downloadResumeUseCase = DownloadResumeUseCase(
+            resumeRepository
+        )
     }
+
+    private lateinit var profileRepository: ProfileRepository
+
+    lateinit var getUserProfileUseCase: GetUserProfileUseCase
+        private set
+
+    lateinit var saveUserProfileUseCase: SaveUserProfileUseCase
+        private set
+
+    private lateinit var resumeRepository: ResumeRepository
+
+    lateinit var downloadResumeUseCase: DownloadResumeUseCase
+        private set
 }

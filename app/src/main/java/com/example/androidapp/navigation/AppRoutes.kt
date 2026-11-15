@@ -21,4 +21,8 @@ sealed interface AppRoute : NavKey {
 
     @Serializable
     data object Favorites : AppRoute
+
+    @Serializable
+    data object EditProfile : AppRoute
+
 }
