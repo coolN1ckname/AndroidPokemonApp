@@ -1,29 +1,39 @@
 package com.example.androidapp.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.androidapp.model.UserProfile
 import com.example.androidapp.usecase.GetUserProfileUseCase
 import com.example.androidapp.usecase.SaveUserProfileUseCase
+import com.example.androidapp.usecase.ScheduleLessonNotificationUseCase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import android.content.Context
-import android.net.Uri
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
+sealed interface EditProfileEvent {
+    data object RequestNotificationPermission : EditProfileEvent
+    data object NavigateBack : EditProfileEvent
+}
+
 class EditProfileViewModel(
     private val getUserProfile: GetUserProfileUseCase,
-    private val saveUserProfile: SaveUserProfileUseCase
+    private val saveUserProfile: SaveUserProfileUseCase,
+    private val scheduleLessonNotification: ScheduleLessonNotificationUseCase
 ) : ViewModel() {
 
     private val _profile = MutableStateFlow(UserProfile())
     val profile: StateFlow<UserProfile> = _profile.asStateFlow()
+
+    private val eventChannel = Channel<EditProfileEvent>(Channel.BUFFERED)
+    val events = eventChannel.receiveAsFlow()
 
     init {
         viewModelScope.launch {
@@ -45,16 +55,43 @@ class EditProfileViewModel(
         _profile.value = _profile.value.copy(resumeUrl = value)
     }
 
+    fun updateLessonTime(value: String) {
+        _profile.value = _profile.value.copy(lessonTime = value)
+    }
+
     fun updatePhotoUri(value: String?) {
         _profile.value = _profile.value.copy(photoUri = value)
     }
 
-    fun saveProfile(onSaved: () -> Unit) {
+    fun isLessonTimeValid(): Boolean {
+        return Regex("^(?:[01]\\d|2[0-3]):[0-5]\\d$")
+            .matches(_profile.value.lessonTime)
+    }
+
+    fun onSaveClicked() {
+        if (!isLessonTimeValid()) return
+
         viewModelScope.launch {
-            saveUserProfile(_profile.value)
-            onSaved()
+            eventChannel.send(
+                EditProfileEvent.RequestNotificationPermission
+            )
         }
     }
+
+    fun onNotificationPermissionResult(granted: Boolean) {
+        viewModelScope.launch {
+            val currentProfile = _profile.value
+
+            saveUserProfile(currentProfile)
+
+            // Планирование напоминания выполняется через UseCase.
+            scheduleLessonNotification(currentProfile)
+
+            // Экран получает событие навигации.
+            eventChannel.send(EditProfileEvent.NavigateBack)
+        }
+    }
+
     fun onPhotoSelected(uri: String) {
         updatePhotoUri(uri)
     }

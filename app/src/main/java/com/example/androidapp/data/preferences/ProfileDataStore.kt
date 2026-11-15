@@ -21,6 +21,7 @@ class ProfileDataStore(
         val PHOTO_URI = stringPreferencesKey("photo_uri")
         val RESUME_URL = stringPreferencesKey("resume_url")
         val POSITION = stringPreferencesKey("position")
+        val LESSON_TIME = stringPreferencesKey("lesson_time")
     }
 
     val profile: Flow<UserProfile> =
@@ -29,7 +30,8 @@ class ProfileDataStore(
                 nickname = preferences[PreferencesKeys.NICKNAME] ?: "",
                 photoUri = preferences[PreferencesKeys.PHOTO_URI],
                 resumeUrl = preferences[PreferencesKeys.RESUME_URL] ?: "",
-                position = preferences[PreferencesKeys.POSITION] ?: ""
+                position = preferences[PreferencesKeys.POSITION] ?: "",
+                lessonTime = preferences[PreferencesKeys.LESSON_TIME] ?: ""
             )
         }
 
@@ -38,6 +40,7 @@ class ProfileDataStore(
             preferences[PreferencesKeys.NICKNAME] = profile.nickname
             preferences[PreferencesKeys.RESUME_URL] = profile.resumeUrl
             preferences[PreferencesKeys.POSITION] = profile.position
+            preferences[PreferencesKeys.LESSON_TIME] = profile.lessonTime
 
             if (profile.photoUri == null) {
                 preferences.remove(PreferencesKeys.PHOTO_URI)
