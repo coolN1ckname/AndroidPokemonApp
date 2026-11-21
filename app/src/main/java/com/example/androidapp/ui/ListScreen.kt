@@ -22,11 +22,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -186,79 +186,12 @@ class ListScreen {
                 items = pokemons,
                 key = { pokemon -> pokemon.id }
             ) { pokemon ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "#${pokemon.id} ${
-                                pokemon.name.replaceFirstChar {
-                                    it.uppercase()
-                                }
-                            }",
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable {
-                                    onPokemonClick(pokemon.id)
-                                },
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        IconButton(
-                            onClick = {
-                                onFavoriteClick(pokemon)
-                            }
-                        ) {
-                            Icon(
-                                imageVector = if (
-                                    pokemon.id in favoriteIds
-                                ) {
-                                    Icons.Default.Favorite
-                                } else {
-                                    Icons.Default.FavoriteBorder
-                                },
-                                contentDescription = if (
-                                    pokemon.id in favoriteIds
-                                ) {
-                                    "Удалить из избранного"
-                                } else {
-                                    "Добавить в избранное"
-                                },
-                                tint = if (
-                                    pokemon.id in favoriteIds
-                                ) {
-                                    Color.Red
-                                } else {
-                                    Color.Gray
-                                }
-                            )
-                        }
-                    }
-
-                    AsyncImage(
-                        model = pokemon.imageUrl,
-                        contentDescription = pokemon.name,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(180.dp)
-                            .clickable {
-                                onPokemonClick(pokemon.id)
-                            }
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    HorizontalDivider(
-                        thickness = 1.dp,
-                        color = Color.LightGray
-                    )
-                }
+                PokemonCard(
+                    pokemon = pokemon,
+                    isFavorite = pokemon.id in favoriteIds,
+                    onPokemonClick = onPokemonClick,
+                    onFavoriteClick = onFavoriteClick
+                )
             }
 
             if (isLoadingMore) {
@@ -295,5 +228,79 @@ class ListScreen {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun PokemonCard(
+    pokemon: Pokemon,
+    isFavorite: Boolean,
+    onPokemonClick: (Int) -> Unit,
+    onFavoriteClick: (Pokemon) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "#${pokemon.id} ${
+                    pokemon.name.replaceFirstChar { it.uppercase() }
+                }",
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable {
+                        onPokemonClick(pokemon.id)
+                    },
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            IconButton(
+                onClick = {
+                    onFavoriteClick(pokemon)
+                }
+            ) {
+                Icon(
+                    imageVector = if (isFavorite) {
+                        Icons.Default.Favorite
+                    } else {
+                        Icons.Default.FavoriteBorder
+                    },
+                    contentDescription = if (isFavorite) {
+                        "Удалить из избранного"
+                    } else {
+                        "Добавить в избранное"
+                    },
+                    tint = if (isFavorite) {
+                        Color.Red
+                    } else {
+                        Color.Gray
+                    }
+                )
+            }
+        }
+
+        AsyncImage(
+            model = pokemon.imageUrl,
+            contentDescription = pokemon.name,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(180.dp)
+                .clickable {
+                    onPokemonClick(pokemon.id)
+                }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        HorizontalDivider(
+            thickness = 1.dp,
+            color = Color.LightGray
+        )
     }
 }

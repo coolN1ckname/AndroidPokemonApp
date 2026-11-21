@@ -5,30 +5,32 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.example.androidapp.DI.AppContainer
 import com.example.androidapp.ui.DetailsScreen
+import com.example.androidapp.ui.FavoritesScreen
 import com.example.androidapp.ui.FilterScreen
 import com.example.androidapp.ui.ListScreen
 import com.example.androidapp.ui.ProfileScreen
-import androidx.compose.material.icons.filled.Favorite
-import com.example.androidapp.ui.FavoritesScreen
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import com.example.androidapp.DI.AppContainer
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material.icons.filled.FilterList
+import com.example.androidapp.viewmodel.FilterViewModel
+import com.example.androidapp.viewmodel.FilterViewModelFactory
 
 @Composable
 fun AppNavigation() {
@@ -36,6 +38,13 @@ fun AppNavigation() {
     val backStack = rememberNavBackStack(
         AppRoute.PokemonList
     )
+
+    val filterViewModel: FilterViewModel = viewModel(
+        factory = FilterViewModelFactory()
+    )
+
+    val showFilterBadge by filterViewModel.showFilterBadge
+        .collectAsState()
 
     val currentRoute = backStack.lastOrNull()
 
@@ -45,15 +54,11 @@ fun AppNavigation() {
                 currentRoute is AppRoute.PokemonFilters ||
                 currentRoute is AppRoute.Favorites
 
-    val showFilterBadge by AppContainer.filterBadgeCache.showBadge
-        .collectAsState()
-
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar {
 
-                    // Вкладка Pokémon
                     NavigationBarItem(
                         selected = currentRoute is AppRoute.PokemonList,
                         onClick = {
@@ -73,7 +78,6 @@ fun AppNavigation() {
                         }
                     )
 
-                    // Вкладка фильтров
                     NavigationBarItem(
                         selected = currentRoute is AppRoute.PokemonFilters,
                         onClick = {
@@ -101,7 +105,6 @@ fun AppNavigation() {
                         }
                     )
 
-
                     NavigationBarItem(
                         selected = currentRoute is AppRoute.Favorites,
                         onClick = {
@@ -121,7 +124,6 @@ fun AppNavigation() {
                         }
                     )
 
-                    // Вкладка профиля
                     NavigationBarItem(
                         selected = currentRoute is AppRoute.Profile,
                         onClick = {
@@ -191,7 +193,8 @@ fun AppNavigation() {
                             onBack = {
                                 backStack.clear()
                                 backStack.add(AppRoute.PokemonList)
-                            }
+                            },
+                            viewModel = filterViewModel
                         )
                     }
 
@@ -204,7 +207,6 @@ fun AppNavigation() {
                             }
                         )
                     }
-
                 }
             )
         }

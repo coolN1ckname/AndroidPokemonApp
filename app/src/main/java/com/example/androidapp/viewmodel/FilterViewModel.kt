@@ -7,10 +7,11 @@ import com.example.androidapp.model.PokemonFilter
 import com.example.androidapp.usecase.GetPokemonFilterUseCase
 import com.example.androidapp.usecase.ResetPokemonFilterUseCase
 import com.example.androidapp.usecase.SavePokemonFilterUseCase
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
 class FilterViewModel(
@@ -29,21 +30,25 @@ class FilterViewModel(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    val showFilterBadge: StateFlow<Boolean> = filterBadgeCache.showBadge
+
+    private val exceptionHandler = CoroutineExceptionHandler { _, exception ->
+        if (exception !is CancellationException) {
+            _error.value = exception.message ?: "Произошла ошибка"
+            _isSaving.value = false
+        }
+    }
+
     init {
         observeFilter()
     }
 
     private fun observeFilter() {
-        viewModelScope.launch {
-            getPokemonFilter()
-                .catch { exception ->
-                    _error.value =
-                        exception.message ?: "Не удалось загрузить фильтры"
-                }
-                .collect { savedFilter ->
-                    _filter.value = savedFilter
-                    updateBadge(savedFilter)
-                }
+        viewModelScope.launch(exceptionHandler) {
+            getPokemonFilter().collect { savedFilter ->
+                _filter.value = savedFilter
+                updateBadge(savedFilter)
+            }
         }
     }
 
@@ -85,12 +90,11 @@ class FilterViewModel(
         }
 
         if (currentFilter.minId > currentFilter.maxId) {
-            _error.value =
-                "Минимальный ID не может быть больше максимального"
+            _error.value = "Минимальный ID не может быть больше максимального"
             return
         }
 
-        viewModelScope.launch {
+        viewModelScope.launch(exceptionHandler) {
             _isSaving.value = true
             _error.value = null
 
@@ -98,9 +102,6 @@ class FilterViewModel(
                 savePokemonFilter(currentFilter)
                 updateBadge(currentFilter)
                 onSaved()
-            } catch (exception: Exception) {
-                _error.value =
-                    exception.message ?: "Не удалось сохранить фильтры"
             } finally {
                 _isSaving.value = false
             }
@@ -108,17 +109,13 @@ class FilterViewModel(
     }
 
     fun resetFilter() {
-        viewModelScope.launch {
+        viewModelScope.launch(exceptionHandler) {
             _error.value = null
 
-            try {
-                resetPokemonFilter()
-                _filter.value = PokemonFilter()
-                filterBadgeCache.update(false)
-            } catch (exception: Exception) {
-                _error.value =
-                    exception.message ?: "Не удалось сбросить фильтры"
-            }
+            resetPokemonFilter()
+
+            _filter.value = PokemonFilter()
+            filterBadgeCache.update(false)
         }
     }
 }

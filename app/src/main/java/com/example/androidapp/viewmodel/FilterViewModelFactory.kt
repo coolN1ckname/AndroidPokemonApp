@@ -7,9 +7,7 @@ import com.example.androidapp.DI.AppContainer
 class FilterViewModelFactory : ViewModelProvider.Factory {
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(
-        modelClass: Class<T>
-    ): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(FilterViewModel::class.java)) {
             return FilterViewModel(
                 getPokemonFilter = AppContainer.getPokemonFilterUseCase,
