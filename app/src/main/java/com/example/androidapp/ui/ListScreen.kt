@@ -43,15 +43,12 @@ class ListScreen {
 
     @Composable
     fun MainListScreen(
-        onPokemonClick: (Int) -> Unit = {},
-        onProfileClick: () -> Unit = {}
-    ){
+        onPokemonClick: (Int) -> Unit = {}, onProfileClick: () -> Unit = {}
+    ) {
 
-        val viewModel: PokemonListViewModel =
-            viewModel()
+        val viewModel: PokemonListViewModel = viewModel()
 
-        val uiState by viewModel.uiState
-            .collectAsStateWithLifecycle()
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
         var searchText by rememberSaveable {
             mutableStateOf("")
@@ -60,8 +57,7 @@ class ListScreen {
         Scaffold(
             bottomBar = {
 
-            }
-        ) { innerPadding ->
+            }) { innerPadding ->
 
             Column(
                 modifier = Modifier
@@ -71,18 +67,13 @@ class ListScreen {
             ) {
 
                 OutlinedTextField(
-                    value = searchText,
-                    onValueChange = {
-                        searchText = it
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = {
-                        Text("Поиск покемона")
-                    },
-                    placeholder = {
-                        Text("Например, Pikachu")
-                    },
-                    singleLine = true
+                    value = searchText, onValueChange = {
+                    searchText = it
+                }, modifier = Modifier.fillMaxWidth(), label = {
+                    Text("Поиск покемона")
+                }, placeholder = {
+                    Text("Например, Pikachu")
+                }, singleLine = true
                 )
 
                 Spacer(
@@ -97,8 +88,7 @@ class ListScreen {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 40.dp),
-                            horizontalAlignment =
-                                Alignment.CenterHorizontally
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
 
                             CircularProgressIndicator()
@@ -119,8 +109,7 @@ class ListScreen {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 40.dp),
-                            horizontalAlignment =
-                                Alignment.CenterHorizontally
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
 
                             Text(
@@ -134,8 +123,7 @@ class ListScreen {
                             OutlinedButton(
                                 onClick = {
                                     viewModel.retry()
-                                }
-                            ) {
+                                }) {
                                 Text("Повторить")
                             }
                         }
@@ -143,30 +131,24 @@ class ListScreen {
 
                     is PokemonListUiState.Success -> {
 
-                        val filteredPokemons =
-                            state.pokemons.filter { pokemon ->
+                        val filteredPokemons = state.pokemons.filter { pokemon ->
 
-                                pokemon.name.contains(
-                                    searchText,
-                                    ignoreCase = true
-                                )
-                            }
+                            pokemon.name.contains(
+                                searchText, ignoreCase = true
+                            )
+                        }
 
                         PokemonList(
                             pokemons = filteredPokemons,
-                            isLoadingMore =
-                                state.isLoadingMore,
-                            errorMessage =
-                                state.errorMessage,
-                            onPokemonClick =
-                                onPokemonClick,
+                            isLoadingMore = state.isLoadingMore,
+                            errorMessage = state.errorMessage,
+                            onPokemonClick = onPokemonClick,
                             onLoadMore = {
                                 viewModel.loadNextPage()
                             },
                             onRetry = {
                                 viewModel.retry()
-                            }
-                        )
+                            })
                     }
                 }
             }
@@ -183,57 +165,41 @@ class ListScreen {
         onRetry: () -> Unit
     ) {
 
-        val listState =
-            rememberLazyListState()
+        val listState = rememberLazyListState()
 
         LaunchedEffect(
-            listState.firstVisibleItemIndex,
-            pokemons.size
+            listState.firstVisibleItemIndex, pokemons.size
         ) {
 
-            val lastVisibleItem =
-                listState.layoutInfo
-                    .visibleItemsInfo
-                    .lastOrNull()
-                    ?.index
+            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index
 
-            if (
-                lastVisibleItem != null &&
-                lastVisibleItem >= pokemons.size - 10
-            ) {
+            if (lastVisibleItem != null && lastVisibleItem >= pokemons.size - 10) {
                 onLoadMore()
             }
         }
 
         LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize()
+            state = listState, modifier = Modifier.fillMaxSize()
         ) {
 
             items(
-                items = pokemons,
-                key = { pokemon ->
+                items = pokemons, key = { pokemon ->
                     pokemon.id
-                }
-            ) { pokemon ->
+                }) { pokemon ->
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            onPokemonClick(pokemon.id)
-                        }
-                        .padding(12.dp)
-                ) {
+                Column(modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        onPokemonClick(pokemon.id)
+                    }
+                    .padding(12.dp)) {
 
                     Text(
-                        text =
-                            "#${pokemon.id} ${
-                                pokemon.name.replaceFirstChar {
-                                    it.uppercase()
-                                }
-                            }"
-                    )
+                        text = "#${pokemon.id} ${
+                        pokemon.name.replaceFirstChar {
+                            it.uppercase()
+                        }
+                    }")
 
                     AsyncImage(
                         model = pokemon.imageUrl,
@@ -248,8 +214,7 @@ class ListScreen {
                     )
 
                     HorizontalDivider(
-                        thickness = 1.dp,
-                        color = Color.LightGray
+                        thickness = 1.dp, color = Color.LightGray
                     )
                 }
             }
@@ -262,8 +227,7 @@ class ListScreen {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        horizontalAlignment =
-                            Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
 
                         CircularProgressIndicator()
@@ -287,8 +251,7 @@ class ListScreen {
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(16.dp),
-                        horizontalAlignment =
-                            Alignment.CenterHorizontally
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
 
                         Text(
