@@ -28,6 +28,7 @@ import com.example.androidapp.usecase.SaveUserProfileUseCase
 import com.example.androidapp.data.repository.ResumeRepositoryImpl
 import com.example.androidapp.repository.ResumeRepository
 import com.example.androidapp.usecase.DownloadResumeUseCase
+import com.example.androidapp.notifications.LessonAlarmScheduler
 
 object AppContainer {
 
@@ -67,7 +68,28 @@ object AppContainer {
     lateinit var removeFavoritePokemonUseCase: RemoveFavoritePokemonUseCase
         private set
 
+    lateinit var lessonAlarmScheduler: LessonAlarmScheduler
+        private set
+
+    private lateinit var profileRepository: ProfileRepository
+
+    lateinit var getUserProfileUseCase: GetUserProfileUseCase
+        private set
+
+    lateinit var saveUserProfileUseCase: SaveUserProfileUseCase
+        private set
+
+    private lateinit var resumeRepository: ResumeRepository
+
+    lateinit var downloadResumeUseCase: DownloadResumeUseCase
+        private set
+
     fun initialize(context: Context) {
+
+        lessonAlarmScheduler = LessonAlarmScheduler(
+            context.applicationContext
+        )
+
         // Фильтры
         val dataStore = PokemonFilterDataStore(
             context.applicationContext
@@ -118,23 +140,13 @@ object AppContainer {
         saveUserProfileUseCase =
             SaveUserProfileUseCase(profileRepository)
 
-        resumeRepository = ResumeRepositoryImpl(context.applicationContext)
+        // Резюме
+        resumeRepository = ResumeRepositoryImpl(
+            context.applicationContext
+        )
 
         downloadResumeUseCase = DownloadResumeUseCase(
             resumeRepository
         )
     }
-
-    private lateinit var profileRepository: ProfileRepository
-
-    lateinit var getUserProfileUseCase: GetUserProfileUseCase
-        private set
-
-    lateinit var saveUserProfileUseCase: SaveUserProfileUseCase
-        private set
-
-    private lateinit var resumeRepository: ResumeRepository
-
-    lateinit var downloadResumeUseCase: DownloadResumeUseCase
-        private set
 }
